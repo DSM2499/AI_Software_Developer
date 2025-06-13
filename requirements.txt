@@ -1,0 +1,9 @@
+openai
+anthropic
+langchain
+chromadb
+faiss-cpu
+redis
+python-dotenv
+pydantic
+gitpython
