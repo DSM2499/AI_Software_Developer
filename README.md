@@ -47,6 +47,8 @@ Documentation Agent -> (Markdown Docs)
 
 ✅ Modular agent architecture — easily extendable
 
+✅ Fine tuned GPT-3.5-turbo on curated datasets
+
 ✅ Architecture parser auto-generates coding tasks from Architect Agent outputs
 
 ✅ Streamlit UI for task submission + management
