@@ -5,19 +5,33 @@ import os
 from agents.base_agent import BaseAgent
 from config.config import Config
 from shared.git_utils import commit_generated_code
+from shared.memory_graph import MemoryGraph
 
 
 
 class CodingAgent(BaseAgent):
+    def __init__(self, name, vector_store):
+        super().__init__(name, vector_store)
+        self.memory = MemoryGraph(vector_store)
+
     def run_task(self, task):
         print(f"[CodingAgent] run_task() called with task: {task['description']}")
-        
+
+        # Retrieve relevant memories for additional context
+        memory_snippets = []
+        for node_id, text, _ in self.memory.query(task["description"], k=3):
+            memory_snippets.append(text)
+        memory_context = "\n".join(memory_snippets)
+
         #print(f"[DEBUG] Before building prompt...")
-        
+
         prompt = f"""
         You are a senior software engineer and an AI pair programmer. Your task is to implement the following feature, focusing on writing clean, efficient, and well-tested code.
         **Feature Description:**
         {task['description']}
+
+        **Lifelong Context:**
+        {memory_context}
 
         **Context and Requirements:**
         * **Project Goal:** (Provide a brief overview of the project's current state and immediate goals related to this task. This information would ideally come from the Project Manager Agent or the RAG system.)
@@ -112,9 +126,15 @@ class CodingAgent(BaseAgent):
         with open(file_path, "w") as f:
             clean_code = code.strip("`").replace("python", "", 1).strip()
             f.write(clean_code)
+
+        # Store the generated code in lifelong memory
+        self.memory.add_memory(
+            clean_code,
+            metadata={"task": task.get("description"), "file": file_name},
+            salience=1.0,
+        )
         #Commit to Git
         try:
             commit_generated_code(file_path, f"Add generated code for task: {task['description']}")
         except Exception as e:
             print(f"[WARN] Git commit failed: {str(e)}")
-        
